@@ -37,6 +37,7 @@ public:
                 bool honesty,
                 double honesty_fraction,
                 bool honesty_prune_leaves,
+                uint honesty_prune_min_samples,
                 double alpha,
                 double imbalance_penalty,
                 uint num_threads,

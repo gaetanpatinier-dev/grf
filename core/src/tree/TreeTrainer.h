@@ -54,7 +54,8 @@ private:
   void repopulate_leaf_nodes(const std::unique_ptr<Tree>& tree,
                              const Data& data,
                              const std::vector<size_t>& leaf_samples,
-                             const bool honesty_prune_leaves) const;
+                             const bool honesty_prune_leaves,
+                             const uint honesty_prune_min_samples) const;
 
   void create_split_variable_subset(std::vector<size_t>& result,
                                     RandomSampler& sampler,

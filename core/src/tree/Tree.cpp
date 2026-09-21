@@ -115,7 +115,13 @@ void Tree::set_prediction_values(const PredictionValues& prediction_values) {
 
 size_t Tree::find_leaf_node(const Data& data,
                             size_t sample) const  {
-  size_t node = root_node;
+  return find_leaf_node(data, sample, root_node);
+}
+
+size_t Tree::find_leaf_node(const Data& data,
+                            size_t sample,
+                            size_t start_node) const  {
+  size_t node = start_node;
   while (true) {
     // Break if terminal node
     if (is_leaf(node)) {
@@ -142,7 +148,7 @@ size_t Tree::find_leaf_node(const Data& data,
   return node;
 };
 
-void Tree::honesty_prune_leaves() {
+void Tree::honesty_prune_leaves(const Data& data, size_t min_leaf_samples) {
   size_t num_nodes = leaf_samples.size();
   for (size_t n = num_nodes; n > root_node; n--) {
     size_t node = n - 1;
@@ -150,35 +156,57 @@ void Tree::honesty_prune_leaves() {
       continue;
     }
 
-    size_t& left_child = child_nodes[0][node];
-    if (!is_leaf(left_child)) {
-      prune_node(left_child);
-    }
-
-    size_t& right_child = child_nodes[1][node];
-    if (!is_leaf(right_child)) {
-      prune_node(right_child);
-    }
+    prune_node(child_nodes[0][node], data, min_leaf_samples);
+    prune_node(child_nodes[1][node], data, min_leaf_samples);
   }
-  prune_node(root_node);
+  prune_node(root_node, data, min_leaf_samples);
 }
 
-void Tree::prune_node(size_t& node) {
+void Tree::prune_node(size_t& node, const Data& data, size_t min_leaf_samples) {
+  if (is_leaf(node)) {
+    return;
+  }
+
   size_t left_child = child_nodes[0][node];
   size_t right_child = child_nodes[1][node];
 
-  // If either child is empty, prune this node.
-  if (is_empty_leaf(left_child) || is_empty_leaf(right_child)) {
-    // Empty out this node.
-    child_nodes[0][node] = 0;
-    child_nodes[1][node] = 0;
+  bool prune_left = is_small_leaf(left_child, min_leaf_samples);
+  bool prune_right = is_small_leaf(right_child, min_leaf_samples);
 
-    // If one of the children is not empty, promote it.
-    if (!is_empty_leaf(left_child)) {
-      node = left_child;
-    } else if (!is_empty_leaf(right_child)) {
-      node = right_child;
-    }
+  // If both children hold enough samples, there is nothing to prune.
+  if (!prune_left && !prune_right) {
+    return;
+  }
+
+  // Empty out this node.
+  child_nodes[0][node] = 0;
+  child_nodes[1][node] = 0;
+
+  if (prune_left && prune_right) {
+    // Both children are too small: collapse them into this node. The merged node may still
+    // be too small, in which case it is pruned in turn when its own parent is visited.
+    reroute_samples(data, left_child, node);
+    reroute_samples(data, right_child, node);
+  } else if (prune_left) {
+    // Promote the right subtree, sending the left child's samples down it.
+    reroute_samples(data, left_child, right_child);
+    node = right_child;
+  } else {
+    reroute_samples(data, right_child, left_child);
+    node = left_child;
+  }
+}
+
+void Tree::reroute_samples(const Data& data,
+                           size_t from_node,
+                           size_t to_node) {
+  std::vector<size_t> samples;
+  samples.swap(leaf_samples[from_node]);
+
+  for (size_t sample : samples) {
+    // The destination may be an entire subtree, so the sample is sent down its splits.
+    size_t leaf_node = find_leaf_node(data, sample, to_node);
+    leaf_samples[leaf_node].push_back(sample);
   }
 }
 
@@ -186,8 +214,8 @@ bool Tree::is_leaf(size_t node) const  {
   return child_nodes[0][node] == 0 && child_nodes[1][node] == 0;
 }
 
-bool Tree::is_empty_leaf(size_t node) const  {
-  return is_leaf(node) && leaf_samples[node].empty();
+bool Tree::is_small_leaf(size_t node, size_t min_leaf_samples) const  {
+  return is_leaf(node) && leaf_samples[node].size() < min_leaf_samples;
 }
 
 } // namespace grf

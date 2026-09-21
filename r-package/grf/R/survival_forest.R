@@ -43,6 +43,10 @@
 #'  tree is skipped and does not contribute to the estimate). Setting this to FALSE may improve performance on
 #'  small/marginally powered data, but requires more trees (note: tuning does not adjust the number of trees).
 #'  Only applies if honesty is enabled. Default is TRUE.
+#' @param honesty.prune.min.samples The smallest number of samples a leaf may hold when pruning. Raising it
+#'  yields shallower trees whose leaves each support a well-conditioned estimate, at the cost of resolution.
+#'  Nuisance forests fit internally (for example Y.hat and W.hat) are not affected. Only applies if honesty
+#'  and honesty.prune.leaves are enabled. Default is 1, which prunes only the empty leaves.
 #' @param alpha A tuning parameter that controls the maximum imbalance of a split. The number of failures in
 #'  each child has to be at least one or `alpha` times the number of samples in the parent node. Default is 0.05.
 #'  (On data with very low event rate the default value may be too high for the forest to split
@@ -123,6 +127,7 @@ survival_forest <- function(X, Y, D,
                             honesty = TRUE,
                             honesty.fraction = 0.5,
                             honesty.prune.leaves = TRUE,
+                            honesty.prune.min.samples = 1,
                             alpha = 0.05,
                             prediction.type = c("Kaplan-Meier", "Nelson-Aalen"),
                             compute.oob.predictions = TRUE,
@@ -170,6 +175,7 @@ survival_forest <- function(X, Y, D,
                honesty = honesty,
                honesty.fraction = honesty.fraction,
                honesty.prune.leaves = honesty.prune.leaves,
+               honesty.prune.min.samples = honesty.prune.min.samples,
                alpha = alpha,
                num.failures = length(failure.times),
                prediction.type = prediction.type,

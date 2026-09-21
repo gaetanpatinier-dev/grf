@@ -69,13 +69,24 @@ public:
   std::vector<size_t> find_leaf_nodes(const Data& data,
                                       const std::vector<bool>& valid_samples) const;
   /**
-   * Removes all empty leaf nodes.
+   * Removes all leaf nodes holding fewer than `min_leaf_samples` samples.
    *
-   * When re-populating the leaves of an honest tree, certain leaf nodes may become empty.
-   * This procedure prunes those nodes, so that each node is either a non-empty leaf, or
-   * has two non-empty subtrees for children.
+   * When re-populating the leaves of an honest tree, certain leaf nodes may end up empty,
+   * or hold too few samples to predict on. This procedure prunes those nodes, so that each
+   * node is either a leaf with at least `min_leaf_samples` samples, or has two such subtrees
+   * for children. The only exception is the root node, which is left in place even if the
+   * whole tree holds fewer samples than that.
+   *
+   * The samples of a pruned leaf are rerouted: they are sent down the sibling subtree that
+   * takes its place, or, if the sibling is pruned as well, kept in the parent node that the
+   * two collapse into.
+   *
+   * @param data: the data matrix the leaves were populated from, used to reroute the
+   * samples of a pruned leaf.
+   * @param min_leaf_samples: the smallest number of samples a leaf may hold without being
+   * pruned. A value of one prunes only the empty leaves.
    */
-  void honesty_prune_leaves();
+  void honesty_prune_leaves(const Data& data, size_t min_leaf_samples);
 
   /**
    * The ID of the root node for this tree. Note that this is usually 0, but may not always
@@ -147,8 +158,14 @@ public:
 private:
   size_t find_leaf_node(const Data& data,
                         size_t sample) const;
-  void prune_node(size_t& node);
-  bool is_empty_leaf(size_t node) const;
+  size_t find_leaf_node(const Data& data,
+                        size_t sample,
+                        size_t start_node) const;
+  void prune_node(size_t& node, const Data& data, size_t min_leaf_samples);
+  void reroute_samples(const Data& data,
+                       size_t from_node,
+                       size_t to_node);
+  bool is_small_leaf(size_t node, size_t min_leaf_samples) const;
 
   size_t root_node;
   std::vector<std::vector<size_t>> child_nodes;

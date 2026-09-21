@@ -94,7 +94,8 @@ std::unique_ptr<Tree> TreeTrainer::train(const Data& data,
       split_vars, split_values, drawn_samples, send_missing_left, PredictionValues()));
 
   if (!new_leaf_samples.empty()) {
-    repopulate_leaf_nodes(tree, data, new_leaf_samples, options.get_honesty_prune_leaves());
+    repopulate_leaf_nodes(tree, data, new_leaf_samples, options.get_honesty_prune_leaves(),
+                          options.get_honesty_prune_min_samples());
   }
 
   PredictionValues prediction_values;
@@ -109,7 +110,8 @@ std::unique_ptr<Tree> TreeTrainer::train(const Data& data,
 void TreeTrainer::repopulate_leaf_nodes(const std::unique_ptr<Tree>& tree,
                                         const Data& data,
                                         const std::vector<size_t>& leaf_samples,
-                                        const bool honesty_prune_leaves) const {
+                                        const bool honesty_prune_leaves,
+                                        const uint honesty_prune_min_samples) const {
   size_t num_nodes = tree->get_leaf_samples().size();
   std::vector<std::vector<size_t>> new_leaf_nodes(num_nodes);
 
@@ -121,7 +123,7 @@ void TreeTrainer::repopulate_leaf_nodes(const std::unique_ptr<Tree>& tree,
   }
   tree->set_leaf_samples(new_leaf_nodes);
   if (honesty_prune_leaves) {
-    tree->honesty_prune_leaves();
+    tree->honesty_prune_leaves(data, honesty_prune_min_samples);
   }
 }
 

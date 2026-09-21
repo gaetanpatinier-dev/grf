@@ -20,6 +20,7 @@ multi_arm_causal_forest(
   honesty = TRUE,
   honesty.fraction = 0.5,
   honesty.prune.leaves = TRUE,
+  honesty.prune.min.samples = 1,
   alpha = 0.05,
   imbalance.penalty = 0,
   stabilize.splits = TRUE,
@@ -92,6 +93,11 @@ are empty. If FALSE, keep the same tree as determined in the splits sample (if a
 tree is skipped and does not contribute to the estimate). Setting this to FALSE may improve performance on
 small/marginally powered data, but requires more trees (note: tuning does not adjust the number of trees).
 Only applies if honesty is enabled. Default is TRUE.}
+
+\item{honesty.prune.min.samples}{The smallest number of samples a leaf may hold when pruning. Raising it
+yields shallower trees whose leaves each support a well-conditioned estimate, at the cost of resolution.
+Nuisance forests fit internally (for example Y.hat and W.hat) are not affected. Only applies if honesty
+and honesty.prune.leaves are enabled. Default is 1, which prunes only the empty leaves.}
 
 \item{alpha}{A tuning parameter that controls the maximum imbalance of a split. Default is 0.05.}
 
