@@ -39,6 +39,7 @@ Rcpp::List regression_train(const Rcpp::NumericMatrix& train_matrix,
                             bool honesty,
                             double honesty_fraction,
                             bool honesty_prune_leaves,
+                            unsigned int honesty_prune_min_samples,
                             size_t ci_group_size,
                             double alpha,
                             double imbalance_penalty,
@@ -60,7 +61,7 @@ Rcpp::List regression_train(const Rcpp::NumericMatrix& train_matrix,
   }
 
   ForestOptions options(num_trees, ci_group_size, sample_fraction, mtry, min_node_size, honesty,
-      honesty_fraction, honesty_prune_leaves, alpha, imbalance_penalty, num_threads, seed, legacy_seed, clusters, samples_per_cluster);
+      honesty_fraction, honesty_prune_leaves, honesty_prune_min_samples, alpha, imbalance_penalty, num_threads, seed, legacy_seed, clusters, samples_per_cluster);
   Forest forest = trainer.train(data, options);
 
   std::vector<Prediction> predictions;
@@ -129,6 +130,7 @@ Rcpp::List ll_regression_train(const Rcpp::NumericMatrix& train_matrix,
                             bool honesty,
                             double honesty_fraction,
                             bool honesty_prune_leaves,
+                            unsigned int honesty_prune_min_samples,
                             size_t ci_group_size,
                             double alpha,
                             double imbalance_penalty,
@@ -147,7 +149,7 @@ Rcpp::List ll_regression_train(const Rcpp::NumericMatrix& train_matrix,
   data.set_outcome_index(outcome_index);
 
   ForestOptions options(num_trees, ci_group_size, sample_fraction, mtry, min_node_size, honesty,
-    honesty_fraction, honesty_prune_leaves, alpha, imbalance_penalty, num_threads, seed, legacy_seed, clusters, samples_per_cluster);
+    honesty_fraction, honesty_prune_leaves, honesty_prune_min_samples, alpha, imbalance_penalty, num_threads, seed, legacy_seed, clusters, samples_per_cluster);
   Forest forest = trainer.train(data, options);
 
   std::vector<Prediction> predictions;

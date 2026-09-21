@@ -41,6 +41,10 @@
 #'  tree is skipped and does not contribute to the estimate). Setting this to FALSE may improve performance on
 #'  small/marginally powered data, but requires more trees (note: tuning does not adjust the number of trees).
 #'  Only applies if honesty is enabled. Default is TRUE.
+#' @param honesty.prune.min.samples The smallest number of samples a leaf may hold when pruning. Raising it
+#'  yields shallower trees whose leaves each support a well-conditioned estimate, at the cost of resolution.
+#'  Nuisance forests fit internally (for example Y.hat and W.hat) are not affected. Only applies if honesty
+#'  and honesty.prune.leaves are enabled. Default is 1, which prunes only the empty leaves.
 #' @param alpha A tuning parameter that controls the maximum imbalance of a split. Default is 0.05.
 #' @param imbalance.penalty A tuning parameter that controls how harshly imbalanced splits are penalized. Default is 0.
 #' @param ci.group.size The forest will grow ci.group.size trees on each subsample.
@@ -98,6 +102,7 @@ boosted_regression_forest <- function(X, Y,
                                       honesty = TRUE,
                                       honesty.fraction = 0.5,
                                       honesty.prune.leaves = TRUE,
+                                      honesty.prune.min.samples = 1,
                                       alpha = 0.05,
                                       imbalance.penalty = 0,
                                       ci.group.size = 2,
@@ -125,6 +130,7 @@ boosted_regression_forest <- function(X, Y,
     min.node.size = min.node.size, honesty = honesty,
     honesty.fraction = honesty.fraction,
     honesty.prune.leaves = honesty.prune.leaves,
+    honesty.prune.min.samples = honesty.prune.min.samples,
     seed = seed, ci.group.size = ci.group.size,
     alpha = alpha,
     imbalance.penalty = imbalance.penalty,
@@ -161,6 +167,7 @@ boosted_regression_forest <- function(X, Y,
         honesty = honesty,
         honesty.fraction = as.numeric(tunable.params["honesty.fraction"]),
         honesty.prune.leaves = as.numeric(tunable.params["honesty.prune.leaves"]),
+        honesty.prune.min.samples = honesty.prune.min.samples,
         seed = seed, ci.group.size = ci.group.size,
         alpha = as.numeric(tunable.params["alpha"]),
         imbalance.penalty = as.numeric(tunable.params["imbalance.penalty"]),
@@ -182,6 +189,7 @@ boosted_regression_forest <- function(X, Y,
       honesty = honesty,
       honesty.fraction = as.numeric(tunable.params["honesty.fraction"]),
       honesty.prune.leaves = as.numeric(tunable.params["honesty.prune.leaves"]),
+      honesty.prune.min.samples = honesty.prune.min.samples,
       seed = seed, ci.group.size = ci.group.size,
       alpha = as.numeric(tunable.params["alpha"]),
       imbalance.penalty = as.numeric(tunable.params["imbalance.penalty"]),

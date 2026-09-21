@@ -39,6 +39,7 @@ Rcpp::List multi_regression_train(const Rcpp::NumericMatrix& train_matrix,
                                   bool honesty,
                                   double honesty_fraction,
                                   bool honesty_prune_leaves,
+                                  unsigned int honesty_prune_min_samples,
                                   double alpha,
                                   double imbalance_penalty,
                                   std::vector<size_t>& clusters,
@@ -58,7 +59,7 @@ Rcpp::List multi_regression_train(const Rcpp::NumericMatrix& train_matrix,
 
   size_t ci_group_size = 1;
   ForestOptions options(num_trees, ci_group_size, sample_fraction, mtry, min_node_size, honesty,
-      honesty_fraction, honesty_prune_leaves, alpha, imbalance_penalty, num_threads, seed, legacy_seed, clusters, samples_per_cluster);
+      honesty_fraction, honesty_prune_leaves, honesty_prune_min_samples, alpha, imbalance_penalty, num_threads, seed, legacy_seed, clusters, samples_per_cluster);
   ForestTrainer trainer = multi_regression_trainer(data.get_num_outcomes());
   Forest forest = trainer.train(data, options);
 

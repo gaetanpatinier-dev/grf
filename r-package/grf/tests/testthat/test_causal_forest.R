@@ -296,7 +296,7 @@ test_that("Weighting is roughly equivalent to replication of samples", {
 })
 
 test_that("A non-pruned honest causal forest contains trees with empty leafs,
-          and a pruned honest causal forest does not contain trees with empty leafs", {
+          and a pruned honest causal forest respects the leaf-size floor", {
   n <- 100
   p <- 4
   num.trees <- 100
@@ -310,25 +310,30 @@ test_that("A non-pruned honest causal forest contains trees with empty leafs,
                                honesty.prune.leaves = FALSE, num.trees = num.trees)
   cf.pruned <- causal_forest(X, Y, W, honesty = TRUE, honesty.fraction = 0.9,
                              honesty.prune.leaves = TRUE, num.trees = num.trees)
+  cf.pruned.5 <- causal_forest(X, Y, W, honesty = TRUE, honesty.fraction = 0.9,
+                               honesty.prune.leaves = TRUE, honesty.prune.min.samples = 5,
+                               num.trees = num.trees)
 
-  contains_empty_leafs <- function(forest, trees) {
-    empty <- lapply(trees, function(t) {
-      tree <- get_tree(forest, t)
-      printed.tree <- capture.output(print(tree))
-      has.empty.leafs <- any(grepl("num_samples: 0", printed.tree))
-      has.empty.leafs
-    })
-    empty
+  # The number of samples held by each leaf of a tree.
+  leaf_sizes <- function(forest, trees) {
+    unlist(lapply(trees, function(t) {
+      nodes <- get_tree(forest, t)$nodes
+      leafs <- Filter(function(node) node$is_leaf, nodes)
+      sapply(leafs, function(leaf) length(leaf$samples))
+    }))
   }
 
-  empty.unpruned <- contains_empty_leafs(cf.unpruned, trees)
-  any.unpruned.empty <- any(as.logical(empty.unpruned))
+  unpruned.sizes <- leaf_sizes(cf.unpruned, trees)
+  pruned.sizes <- leaf_sizes(cf.pruned, trees)
+  pruned.5.sizes <- leaf_sizes(cf.pruned.5, trees)
 
-  empty.pruned <- contains_empty_leafs(cf.pruned, trees)
-  any.pruned.empty <- any(as.logical(empty.pruned))
-
-  expect_true(any.unpruned.empty)
-  expect_true(!any.pruned.empty)
+  expect_true(any(unpruned.sizes == 0))
+  # By default pruning only drops the empty leafs.
+  expect_true(all(pruned.sizes >= 1))
+  # A higher floor drops the leafs below it and reroutes their samples, so no sample is lost.
+  expect_true(all(pruned.5.sizes >= 5))
+  expect_equal(sum(unpruned.sizes), sum(pruned.sizes))
+  expect_equal(sum(unpruned.sizes), sum(pruned.5.sizes))
 })
 
 test_that("causal_forest works as expected with missing values", {
